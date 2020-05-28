@@ -3,7 +3,7 @@
 def divisors(number):
     div = 2
     proper_divisors = []
-    while number != number or number != 1:
+    while number != 1:
         if number % div == 0:
             number = number // div
             proper_divisors.append(div)
@@ -23,30 +23,39 @@ def binary(number):
     return bin_number
 
 
-def average():
-    average_list = []
-    stamp = 1
-    while stamp <= 134:
-        for x in range(stamp, stamp+10):
-            x += 1
-        average_list.append(x/10)
-        stamp += 1
-    return average_list
+def average(window, lstart, lfinish) -> list:
+    """Calculating moving average
 
-
-def fibo(x):
-    if x == 0:
-        return 1
-    elif x == 1:
-        return 1
-    else:
-        return fibo(x-1) + fibo(x-2)
+    :param window: int number size of the window
+    :param lstart: int number start of the list
+    :param lfinish: int number finish of the list
+    :return: list of average numbers
+    """
+    l = list(range(lstart, lfinish))
+    average = []
+    counter = 0
+    for x in l:
+        counter += 1
+        x += 1
+        if counter == window:
+            average.append(x / window)
+            counter = 0  #nulled counter to start cycle of a new window
+    return average
 
 
 def ziggurat(num):
     #have not done yet
-    zig1 = [[num-num+1 for y in range(num)] for x in range(num)]
-    zig2 = [[num-num+1 if y < num-3 or y > num-3 else num for y in range(num)] for x in range(num)]
-    for x in range(num+3):
-        print(zig1[x])
-        print(zig2[x])
+    l = []
+    n, y = num, num
+    for x in range(1, num + num):
+        if x <= n:
+            l.append(x)
+        else:
+            y -= 1
+            l.append(y)
+    for x in range(1, num + num):
+        print(l)
+
+
+if __name__ == '__main__':
+    print(average(5, 1, 100))
