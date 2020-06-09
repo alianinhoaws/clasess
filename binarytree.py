@@ -1,3 +1,4 @@
+from queue import LifoQueue
 from random import randint
 
 
@@ -56,10 +57,38 @@ class BinarySearchTree:
             return self._search(value, cur_node.right_child)
         return False   #no found
 
-    def search2(self, value):
-        search_value = Iterator(value, self.root)
-        for search in search_value:
-            search()
+
+    def print_tree2(self):
+        self.cur_node = self.root
+        lq = LifoQueue()
+        while self.cur_node.left_child:
+            self.parent_node = self.cur_node
+            lq.put(self.parent_node)
+            self.cur_node = self.cur_node.left_child
+        print(self.cur_node.value)
+        while True:
+            if self.cur_node.right_child:
+                self.cur_node = self.cur_node.right_child
+                while self.cur_node.left_child:
+                    self.cur_node = self.cur_node.left_child
+                print(self.cur_node.value)  # 21
+            else:
+                break
+        self.parent_node = lq.get()
+        print(self.parent_node.value)
+        while True:
+            while True:
+                if self.parent_node.right_child:
+                    self.parent_node = self.parent_node.right_child
+                    while self.parent_node.left_child:
+                        self.parent_node = self.parent_node.left_child
+                    print(self.parent_node.value)
+                else:
+                    break
+            self.parent_node = lq.get()
+            print(self.parent_node.value)
+            # TODO break condition
+
 
 class Iterator(BinarySearchTree):
 

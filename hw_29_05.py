@@ -4,13 +4,14 @@ from datetime import datetime
 
 def logged(format):
     def new(func):
+        print(func)
         def count(*args, **kwargs):
             start = datetime.now()
             result = func(*args, **kwargs)
             print(f"Finished '{func.__name__}', execution time =  {(datetime.now()-start).total_seconds()}s")
             print(f"Running '{func.__name__}', on {datetime.now().strftime(format)}")
             return result
-        return count
+        return count,
     return new
 
 
