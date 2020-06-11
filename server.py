@@ -77,3 +77,5 @@ class Server:
 if __name__ == '__main__':
     a = Server('localhost', 8080)
     a.run()
+
+#curl -X GET -d arg=val -d arg2=val2 localhost:8080
