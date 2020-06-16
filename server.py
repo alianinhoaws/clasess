@@ -9,6 +9,7 @@ class Server:
     def __init__(self, address, port):
         self.server_socket.bind((address, port))  # binds server to the address
         self.request = None                       # request from user
+        self.storage = {}
 
     def run(self):
         socket_server = self.server_socket
@@ -32,29 +33,16 @@ class Server:
         return headers.encode()
 
     def dictionary(self, method=None):
-        try:
-            storage = json.load(open('storage.json'))
-        except:
-            storage = {}
         if method:
-            if method == 'POST':
-                if len(storage) < 1:
-                    storage = {'hello': 'default'}
-                return storage
-            if method == 'PUT':
-                if 'hello' in storage:
-                    storage['hello'] = 'newkey'
-                return storage
-            if method == 'DELETE':
-                storage.pop('hello', None)
-                return storage
-            if method == 'GET':
-                return storage
+            options = {
+                "POST": {'hello': 'default'},
+                "PUT": {'new_key': 'hello'} if 'hello' in self.storage else {'hello': 'default'},
+                "DELETE": {},
+                "GET": self.storage,
+            }
+            self.storage = options.get(method)
+            return self.storage
         return
-
-    def write_to_file(self, storage):
-        with open('storage.json', 'w') as file:
-            json.dump(storage, file, indent=2, ensure_ascii=False)
 
     def urls(self):
         urls = ['/']
@@ -70,7 +58,6 @@ class Server:
         if method not in self.methods():
             return ('HTTTP/1.1 405 Method not allowed\n\n', 405)
         storage = self.dictionary(method)
-        self.write_to_file(storage)
         return (f'HTTTP/1.1 202 response: {storage}\n\n', 202)
 
 

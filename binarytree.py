@@ -8,7 +8,6 @@ class Node:
         self.left_child = None
         self.right_child = None
 
-
 class BinarySearchTree:
     def __init__(self):
         self.root = None  # root node
@@ -71,7 +70,7 @@ class BinarySearchTree:
                 self.cur_node = self.cur_node.right_child
                 while self.cur_node.left_child:
                     self.cur_node = self.cur_node.left_child
-                print(self.cur_node.value)  # 21
+                print(self.cur_node.value)
             else:
                 break
         self.parent_node = lq.get()
@@ -80,14 +79,55 @@ class BinarySearchTree:
             while True:
                 if self.parent_node.right_child:
                     self.parent_node = self.parent_node.right_child
+                    lq.put(self.parent_node)
                     while self.parent_node.left_child:
                         self.parent_node = self.parent_node.left_child
                     print(self.parent_node.value)
                 else:
                     break
-            self.parent_node = lq.get()
-            print(self.parent_node.value)
-            # TODO break condition
+            self.cur_node = lq.get()
+            self.cur_node = lq.get()
+            print(self.cur_node.value)
+            while True:
+                if self.cur_node.right_child:
+                    lq.put(self.cur_node)
+                    self.cur_node = self.cur_node.right_child
+                    while self.cur_node.left_child:
+                        lq.put(self.cur_node)
+                        self.cur_node = self.cur_node.left_child
+                    print(self.cur_node.value)
+                else:
+                    break
+                self.cur_node = lq.get()
+                print(self.cur_node.value)
+            self.cur_node = lq.get()
+            self.cur_node = lq.get()
+            print(self.cur_node.value)
+            while True:
+                if self.cur_node.right_child:
+                    self.cur_node = self.cur_node.right_child
+                    while self.cur_node.left_child:
+                        self.cur_node = self.cur_node.left_child
+                    print(self.cur_node.value)
+                else:
+                    break
+            break
+            
+
+if __name__ == '__main__':
+    tree = BinarySearchTree()
+    max_int_number = 100
+    lixt = [72,13,33,0,18,55,26,46,78,94]
+    for x in lixt: #range
+        #cur_elem = randint(0, max_int_number)
+        tree.insert(x)
+
+
+#tree.print_tree()
+#print(tree.search(10))
+print(tree.print_tree2())
+
+
 
 
 class Iterator(BinarySearchTree):
@@ -107,16 +147,3 @@ class Iterator(BinarySearchTree):
         elif self.value > self.cur_node.value and self.cur_node.right_child is not None:
             return self._search(self.value, self.cur_node.right_child)
         return False
-
-
-if __name__ == '__main__':
-    tree = BinarySearchTree()
-    max_int_number = 100
-    for _ in range(100):
-        cur_elem = randint(0, max_int_number)
-        tree.insert(cur_elem)
-
-
-tree.print_tree()
-print(tree.search(10))
-print(tree.search2(2))  # does not work
