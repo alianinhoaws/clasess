@@ -1,6 +1,7 @@
 import socket
 import time
-from queue import LifoQueue
+from threading import Thread
+from queue import Queue
 
 
 class Server:
@@ -11,22 +12,18 @@ class Server:
         self.server_socket.bind((address, port))
         self.request = None
         self.storage = {}
-        #self.threadPoll = LifoQueue()
         self.threadPoll = []
+        self.queue = Queue()
 
     def run(self):
         socket_server = self.server_socket
+        self.create_threads()
         socket_server.listen()
         while True:
-            client_socket, _ = socket_server.accept()
-            #self.threadPoll.put(client_socket)
-            self.threadPoll.append(client_socket)
+            self.client_socket, _ = socket_server.accept()
+            self.queue.put(self.client_socket)
             self.worker2()
-            print(self.threadPoll)
 
-            # print('threadPoll', self.threadPoll)
-            # if self.threadPoll.qsize() > 3:
-            #     self.worker()
 
     def parse_requset(self):
         parsed = self.request.decode().split(' ')  # decode and "b'GET / = method and URL
@@ -67,23 +64,14 @@ class Server:
         storage = self.dictionary(method)
         return (f'HTTTP/1.1 202 response: {storage}\n\n', 202)
 
-    def worker(self, is_abort=None):
-        while self.threadPoll:
-            task = self.threadPoll.get()
-            print(task)
-            self.job(task)
-
     def worker2(self, is_abort=None):
-        #while True:
-            try:
-                task = self.threadPoll.pop(0)
-                print(task)
-                self.job(task)
-            except:
+        while True:
+            task = self.queue.get()
+            self.job(task)
+            if self.queue.empty():
+                break
                 print('No task')
                 time.sleep(5)
-         #       continue
-
 
     def job(self, client_socket):
             print('Job started')
@@ -93,10 +81,21 @@ class Server:
                 response = self.make_response()
                 client_socket.sendall(response)
                 client_socket.close()
-                self.worker2()
-            print('finish')
 
+    def create_threads(self, is_alive=True):
+        self.threads = []
+        for _ in range(1, 3):
+            t = Thread(target=self.worker2)
+            #t.is_alive = is_alive
+            t.start()
+            self.threads.append(t)
+        print (self.threads)
+        return self.threads
 
+    def create_jobs(self):
+        for x in range(1, 3):
+            self.queue.put(x)
+        self.queue.join()
 
 if __name__ == '__main__':
     a = Server('localhost', 8080)
