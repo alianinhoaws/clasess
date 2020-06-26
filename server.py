@@ -22,7 +22,7 @@ class Server:
         while True:
             self.client_socket, _ = socket_server.accept()
             self.queue.put(self.client_socket)
-            self.worker2()
+            self.worker()
 
 
     def parse_requset(self):
@@ -64,14 +64,16 @@ class Server:
         storage = self.dictionary(method)
         return (f'HTTTP/1.1 202 response: {storage}\n\n', 202)
 
-    def worker2(self, is_abort=None):
+    def worker(self, is_abort=None):
         while True:
             task = self.queue.get()
             self.job(task)
             if self.queue.empty():
-                break
-                print('No task')
+                print('No sleep')
                 time.sleep(5)
+                print('No wake up')
+                continue
+
 
     def job(self, client_socket):
             print('Job started')
@@ -82,21 +84,13 @@ class Server:
                 client_socket.sendall(response)
                 client_socket.close()
 
-    def create_threads(self, is_alive=True):
-        self.threads = []
+    def create_threads(self):
         for _ in range(1, 3):
-            t = Thread(target=self.worker2)
-            #t.is_alive = is_alive
+            t = Thread(target=self.worker)
             t.start()
-            self.threads.append(t)
-        print (self.threads)
-        return self.threads
 
-    def create_jobs(self):
-        for x in range(1, 3):
-            self.queue.put(x)
-        self.queue.join()
 
+# we start the server create workers add threads to them
 if __name__ == '__main__':
     a = Server('localhost', 8080)
     a.run()
