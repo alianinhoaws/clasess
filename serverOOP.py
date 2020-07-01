@@ -65,11 +65,11 @@ class Server:
 
     def post(self):
         self.storage.update({'hello': 'default'})
-        return
+        return self.storage
 
     def put(self):
         self.storage.update({'new_key': 'hello'} if 'hello' in self.storage else {'hello': 'default'})
-        return
+        return self.storage
 
     def delete(self):
         self.storage = dict()
@@ -92,11 +92,12 @@ class Server:
 
     def make_headers(self, method, url):
         if url not in self.urls():
-            return 'HTTP/1.1 Not found 404\n\n'
+            return 'Not found 404\n\n'
         header = self.methods(method)
-        if header:
-            return f'HTTP/1.1 {header} 405'
-        return f'HTTP/1.1 response: {self.storage} 200'
+        if not header:
+            return f'{header} 405\n\n'
+        return f'response: {self.storage}, {header} 200\n\n'
+
 
     def job(self, client_socket):
         self.request = client_socket.recv(1024)
