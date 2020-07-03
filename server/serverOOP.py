@@ -42,14 +42,14 @@ class Server:
             try:
                 name, surname, birthday, telephone = data
                 self.storage.get('users').update({id: UserProfile(id, name, surname, birthday, telephone)})
-                return self.storage
+                return 'OK', data
             except TypeError:
                 return data
         elif url.startswith('/company/'):
             try:
                 name, addr, telephone = data
                 self.storage.get('companies').update({id: UserProfile(id, name, addr, telephone)})
-                return self.storage
+                return 'OK', data
             except TypeError:
                 return data
         else:
@@ -68,12 +68,12 @@ class Server:
 
     def delete(self, tag, id):
         print('IN DELETE')
-        try:
-            if tag:
-                return self.storage.get('users').pop(id)
-            self.storage.get('companies').pop(id)
-        except KeyError:
-            return
+        # try:
+        #     if tag:
+        #         return self.storage.get('users').pop(id)
+        #     self.storage.get('companies').pop(id)
+        # except KeyError:
+        #     return
 
     def get(self, tag, id):
         print('IN GET')
