@@ -23,7 +23,7 @@ class Server:
             task_pool.add_task((client_socket, self.job))
 
     def parse_request(self):
-        parsed = self.request.decode('utf-8').split(' ')  # decode and "b'GET / = method and URL
+        parsed = self.request.decode('utf-8').split(' ')
         method = parsed[0]
         url = parsed[1]
         try:
