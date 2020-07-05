@@ -1,20 +1,18 @@
+import re
 
-url = '/user/adada'
+STORAGE = {
+    'companies': {12: {'arg': 'vr', 1:2}, 13: {'adad':'dadad'}},
+    'users': {},
+}
 
-method = 'DELETE'
 
-def lalal(method):
-    if url.startswith('/user/'):
-        tag = 'User'
-    methods = {
-        "POST": 'self.post(tag)',
-        "PUT": 'self.put(tag)',
-        "DELETE": 'self.delete(tag, id)',
-        "GET": 'self.get(tag, id)',
-    }
-    try:
-        return methods[method]
-    except Exception as exc:
-        print(exc)
+a = STORAGE.get('companies').get(12).update({'new_value': 'new_va'})
 
-print(lalal(method))
+if not STORAGE.get('companies', {}).get(10):
+    print('LALALLALALLALA')
+
+
+
+result = re.findall('=(\w+)', 'id=2&name=companyX&address=London&tepephone=001')
+
+print(result)
