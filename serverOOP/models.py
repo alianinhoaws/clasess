@@ -10,7 +10,6 @@ class RequestPatcher:
 
     def __init__(self, request):
         self.request = self.decode_request(request)
-        #response = self.method_dispatcher(self.parse_method(request))(request)  # should be in __call__
 
     def decode_request(self, request):
         return request.decode('utf-8').split(' ')
@@ -28,7 +27,7 @@ class RequestPatcher:
         return request[1].split('/')[2]
 
     def save(self, request, args):
-        return UserProfile(self.parse_id(request))() \
+        return UserProfile(self.parse_id(request), args[0], args[1], args[2], args[3])() \
             if self.parse_url(request) == 'users' else Companies(self.parse_id(request), args[0], args[1], args[2])()
 
     def get(self, request):
@@ -56,6 +55,7 @@ class RequestPatcher:
 
     def __call__(self):
         response = self.method_dispatcher(self.parse_method(self.request))(self.request)
+        print(response)
         return str(response) if response else 'OK'
 
     def method_dispatcher(self, method):
@@ -81,7 +81,6 @@ class UserProfile(RequestPatcher):
         self.telephone = telephone
 
     def __call__(self):
-
         return {
             'id': self.id, 'name': self.name, 'surname': self.surname,
             'birthday': self.birthday, 'telephone': self.telephone

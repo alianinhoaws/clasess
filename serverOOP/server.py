@@ -33,5 +33,7 @@ if __name__ == '__main__':
     a.run()
 
 #curl -X GET -d arg=val -d arg2=val2 localhost:8080
-#curl -X POST -d id=2 -d name='companyX' -d address='London' -d tepephone='001' localhost:8080/companies/12
-#curl -X GET -d arg=val -d arg2=val2 localhost:8080/companies/12
+#curl -X POST -d id=12 -d name='companyX' -d address='London' -d telephone='001' localhost:8080/companies/12
+#curl -X GET localhost:8080/companies/12
+#curl -X POST -d id=1 -d name='John' -d surname='D' -d birthday='07/07/2010' -d telephone='+380671111333' localhost:8080/users/1
+#curl -X GET localhost:8080/users/1
