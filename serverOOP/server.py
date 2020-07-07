@@ -23,7 +23,7 @@ class Server:
     def job(self, client_socket):
         self.request = client_socket.recv(1024)
         if self.request:
-            response = str(AbstractModels(request=self.request)())
+            response = AbstractModels(request=self.request)()
             print("RESPONSE", response)
             client_socket.sendall(response.encode())
             client_socket.close()
