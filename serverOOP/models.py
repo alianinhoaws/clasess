@@ -1,4 +1,5 @@
 import re
+import random
 
 STORAGE = {
     'companies': {},
@@ -6,105 +7,203 @@ STORAGE = {
 }
 
 
-class RequestPatcher:
+class AbstractModels:
 
     def __init__(self, request):
-        self.request = self.decode_request(request)
+        self.request = request
 
-    def decode_request(self, request):
-        return request.decode('utf-8').split(' ')
+    def parse_args(self):
+        return re.findall('=(\w+)', self.request[-1].split('\n')[-1])
 
-    def parse_method(self, request):
-        return request[0]
+    def parse_url(self):
+        return self.request[1].split('/')[1]
 
-    def parse_url(self, request):
-        return request[1].split('/')[1]
+    def parse_id(self):
+        return self.request[1].split('/')[2]
 
-    def parse_args(self, request):
-        return re.findall('=(\w+)', request[-1].split('\n')[-1])
+    def get(self):
+        id = self.parse_id()
+        if not self.select(id):
+            return '404'
+        return '200'
 
-    def parse_id(self, request):
-        return request[1].split('/')[2]
-
-    def save(self, args):
-        pass
-
-    def get(self, request):
-        return STORAGE.get(self.parse_url(request), {}).get(self.parse_id(request))
-
-    def post(self, request):
+    def post(self):
+        print('IN POST')
         # input data
-        if STORAGE.get(self.parse_url(request), {}).get(self.parse_id(request)):
-            return
-        return STORAGE.get(self.parse_url(request), {}).update(
-            {self.parse_id(request): (self.save(self.parse_args(request)))}
-        )
+        args = self.parse_args()
+        id = self.parse_id()
+        message = self.save(id, args)
+        if message:
+            return f'409 {message}'
+        return '200 created successfully'
 
-    def put(self, request):
+    def put(self):
         # update data
-        if not STORAGE.get(self.parse_url(request), {}).get(self.parse_id(request)):
-            return
-        return STORAGE.get(self.parse_url(request), {}).update({self.parse_id(request): (self.save(request))})
-
-    def delete(self, request):
-        try:
-            STORAGE.get(self.parse_url(request)).pop(self.parse_id(request))
-        except KeyError:
-            return
-
-    def method_dispatcher(self, method):
-        try:
-            method_dispatcher = {
-                "POST": self.post,
-                "PUT": self.put,
-                "GET": self.get,
-                "DELETE": self.delete,
-            }
-            return method_dispatcher[method]
-        except KeyError as ex:
-            return f'Method {ex} not allowed'
+        # if not STORAGE.get(self.parse_url(request), {}).get(self.parse_id(request)):
+        #     return
+        args = self.parse_args()
+        id = self.parse_id()
+        message = self.update(id, args)
+        if message:
+            return f'404 {message}'
+        return '201 updated successfully'
 
 
-class AbstractModels(RequestPatcher):
+    def delete(self):
+        message = self.remove(self.parse_id())
+        if message:
+            return f'404 {message}'
+        return '200'
 
-    def __init__(self, request):
-        super().__init__(request)
+    def save(self, id, args):
+        raise NotImplemented
 
-    def __call__(self):
-        if self.parse_url(self.request) == 'users':
-            return UserProfile(self.request)()
-        return Companies(self.request)()
+    def save_random_id(self, args):
+        raise NotImplemented
+
+    def update(self, id, args):
+        raise NotImplemented
+
+    def remove(self, param):
+        raise NotImplemented
+
+    def select(self, id):
+        raise NotImplemented
 
 
 class UserProfile(AbstractModels):
 
-    def __init__(self, request):
-        self.request = request
+    def save(self, id, args):
+        try:
+            name, surname, birthday, telephone = args
+        except ValueError as ex:
+            return f'Unexpected args{ex}'
+        try:
+            STORAGE['companies'][id] = {
+                 'name': name, 'surname': surname,
+                 'birthday': birthday, 'telephone': telephone
+            }
+        except KeyError as ex:
+            return f'User already exists{ex}'
 
-    def __call__(self):
-        response = self.method_dispatcher(self.parse_method(self.request))(self.request)
-        print(STORAGE)
-        return str(response) if response else 'OK'
 
-    def save(self, args):
-        name, surname, birthday, telephone = args
-        return {
-            'id': self.parse_id(self.request), 'name': name, 'surname': surname,
+    def save_random_id(self, args):
+        try:
+            name, surname, birthday, telephone = args
+        except ValueError as ex:
+            return f'Unexpected args{ex}'
+        STORAGE['users'][random.randint(1, 10)] = {
+            'name': name, 'surname': surname,
             'birthday': birthday, 'telephone': telephone
         }
+
+    def select(self, id):
+        try:
+            return STORAGE['users']['id']
+        except KeyError:
+            return
+
+    def update(self, args, id):
+        try:
+            name, surname, birthday, telephone = args
+        except ValueError as ex:
+            return f'Unexpected args{ex}'
+        try:
+            STORAGE['users'][id] = {
+                'name': name, 'surname': surname,
+                'birthday': birthday, 'telephone': telephone
+            }
+        except KeyError:
+            return "User unregistered"
+
+    def remove(self, param):
+        try:
+            del STORAGE['users'][id]
+        except KeyError:
+            return "User is unregistered"
 
 
 class Companies(AbstractModels):
 
+    def save(self, id, args):
+        try:
+            name, address, telephone = args
+        except ValueError as ex:
+            return f'Unexpected args{ex}'
+        try:
+            STORAGE['companies'][id] = {
+                'name': name, 'address': address, 'telephone': telephone
+            }
+            print(STORAGE)
+        except KeyError as ex:
+            return f'Company already exists{ex}'
+
+    def save_random_id(self, args):
+        try:
+            name, address, telephone = args
+        except ValueError as ex:
+            return f'Unexpected args{ex}'
+        STORAGE['companies'][random.randint(1, 10)] = {
+                'name': name, 'address': address, 'telephone': telephone
+        }
+
+    def select(self, id):
+        try:
+            return STORAGE['companies']['id']
+        except KeyError:
+            return "Company is unregistered"
+
+    def update(self, id, args):
+        try:
+            name, address, telephone = args
+        except ValueError as ex:
+            return f'Unexpected args{ex}'
+        try:
+            STORAGE['companies'][id] = {
+                'name': name, 'address': address, 'telephone': telephone
+            }
+        except KeyError:
+            return "Company is unregistered"
+
+    def remove(self, request):
+        try:
+            del STORAGE['companies'][id]
+        except KeyError:
+            return "Company is unregistered"
+
+
+class RequestPatcher:
+
+    ROUTERS = {
+        "users": UserProfile,
+        "companies": Companies,
+    }
+
     def __init__(self, request):
-        self.request = request
+        self.request = self.decode_request(request)
 
     def __call__(self):
-        response = self.method_dispatcher(self.parse_method(self.request))(self.request)
-        print(STORAGE)
-        return str(response) if response else 'OK'
+        handler = self.ROUTERS[self.parse_url()](self.request)
+        return self.method_dispatcher(self.parse_method, handler)
 
-    def save(self, args):
-        name, surname, address, telephone = args
-        return {'id': self.parse_id(self.request), 'name': name,
-                'address': address, 'telephone': telephone}
+    def decode_request(self, request):
+        return request.decode('utf-8').split(' ')
+
+    def parse_method(self):
+        return self.request[0]
+
+    def parse_url(self):
+        return self.request[1].split('/')[1]
+
+    def method_dispatcher(self, method, handler):
+        try:
+            method_dispatcher = {
+                "POST": handler.post(),
+                "PUT": handler.put(),
+                "GET": handler.get(),
+                "DELETE": handler.delete(),
+            }
+            print(method, handler)
+            return method_dispatcher[method]
+        except KeyError as ex:
+            return f'Method {ex} not allowed'
