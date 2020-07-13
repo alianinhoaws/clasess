@@ -1,6 +1,6 @@
 import socket
-from threadpool import ThreadPool
-from models import RequestPatcher
+from serverOOP.threadpool import ThreadPool
+from serverOOP.models import RequestPatcher
 
 
 class Server:

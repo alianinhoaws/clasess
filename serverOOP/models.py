@@ -1,5 +1,6 @@
 import re
 import random
+from serverOOP.db import insert_users, insert_companies, create_tables
 
 STORAGE = {
     'companies': {},
@@ -11,6 +12,7 @@ class AbstractModels:
 
     def __init__(self, request):
         self.request = request
+        create_tables()
 
     def parse_args(self):
         return re.findall('=(\w+)', self.request[-1].split('\n')[-1])
@@ -28,26 +30,23 @@ class AbstractModels:
         return '200'
 
     def post(self):
-        print('IN POST')
         # input data
         args = self.parse_args()
         id = self.parse_id()
         message = self.save(id, args)
+        #message = self.save_random_id(args)
         if message:
             return f'409 {message}'
         return '200 created successfully'
 
     def put(self):
         # update data
-        # if not STORAGE.get(self.parse_url(request), {}).get(self.parse_id(request)):
-        #     return
         args = self.parse_args()
         id = self.parse_id()
         message = self.update(id, args)
         if message:
             return f'404 {message}'
         return '201 updated successfully'
-
 
     def delete(self):
         message = self.remove(self.parse_id())
@@ -79,10 +78,11 @@ class UserProfile(AbstractModels):
         except ValueError as ex:
             return f'Unexpected args{ex}'
         try:
-            STORAGE['companies'][id] = {
-                 'name': name, 'surname': surname,
-                 'birthday': birthday, 'telephone': telephone
-            }
+            # STORAGE['companies'][id] = {
+            #      'name': name, 'surname': surname,
+            #      'birthday': birthday, 'telephone': telephone
+            # }
+            insert_users(id, name, surname, birthday, telephone)
         except KeyError as ex:
             return f'User already exists{ex}'
 
@@ -131,11 +131,11 @@ class Companies(AbstractModels):
         except ValueError as ex:
             return f'Unexpected args{ex}'
         try:
-            STORAGE['companies'][id] = {
-                'name': name, 'address': address, 'telephone': telephone
-            }
-            print(STORAGE)
-        except KeyError as ex:
+        #     STORAGE['companies'][id] = {
+        #         'name': name, 'address': address, 'telephone': telephone
+        #     }
+            insert_companies(id, name, address, telephone)
+        except Exception as ex:
             return f'Company already exists{ex}'
 
     def save_random_id(self, args):
@@ -203,7 +203,6 @@ class RequestPatcher:
                 "GET": handler.get(),
                 "DELETE": handler.delete(),
             }
-            print(method, handler)
             return method_dispatcher[method]
         except KeyError as ex:
             return f'Method {ex} not allowed'
