@@ -79,8 +79,8 @@ class UserProfile(AbstractModels):
             return 'Name should have alphabet text and starts with Capital letter'
         if not re.fullmatch('[A-Z][\w]*', surname):
             return 'Surname should have alphabet text and starts with Capital letter'
-        if not re.fullmatch('\d{2}-\d{2}-\d{4}', birthday):  # add month/day check 12/31
-            return 'Telephone should contain 10 digits'
+        if not re.fullmatch('\d{2}/\d{2}/\d{4}', birthday):  # add month/day check 12/31
+            return 'Birthday should be kind of 18-09-1988'
         if not re.fullmatch('[0-9]{10}', telephone):
             return 'Telephone should contain 10 digits'
         return name, surname, birthday, telephone
@@ -138,7 +138,7 @@ class Companies(AbstractModels):
         if not re.fullmatch('[A-Z][\w]*', name):
             return 'Name should have alphabet text and starts with Capital letter'
         if not re.fullmatch('[\w]*', address):
-            return 'Adress should have alphabet text'
+            return 'Address should have alphabet text'
         if not re.fullmatch('[0-9]{10}', telephone):
             return 'Telephone should contain 10 digits'
         return name, address, telephone
