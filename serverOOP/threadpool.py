@@ -23,7 +23,7 @@ class Worker(Thread):
 class ThreadPool:
     def __init__(self):
         self.__task_list = Queue()
-        self.worker_list = [Worker(i, self.__task_list) for i in range(1, 5)]
+        self.worker_list = [Worker(i, self.__task_list) for i in range(0, 1)]
         for worker in self.worker_list:
             worker.start()
 
