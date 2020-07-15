@@ -29,6 +29,9 @@ def insert_users(c, id, name, surname, birthday, telephone):
 
 @base_connect
 def update_users(c, id, name, surname, birthday, telephone):
+    # TODO string builder
+    #  entity name, id, list args (field_name, value)
+
     c.execute("""UPDATE users SET :name, :surname, :birthday, :telephone, 
                         WHERE id = :id""",
               {':id': id, ':name': name, ':surname': surname, ':birthday': birthday, ':telephone': telephone})

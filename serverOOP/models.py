@@ -1,8 +1,9 @@
 import re
 import random
-from serverOOP.db import insert_users, insert_companies, derive_users_from_db, derive_companies_from_db, \
-    del_companies_from_db, update_companies, update_users
+from serverOOP.db import *
 
+
+# Controller+Model
 
 class AbstractModels:
 
@@ -18,7 +19,7 @@ class AbstractModels:
     def parse_id(self):
         id =  self.request[1].split('/')[2]
         if not re.fullmatch('[\d]*', id):
-            return 'Id should contain only digits'
+            return 'Id should contain only digits' # 400
         return id
 
     def get(self):
@@ -31,10 +32,15 @@ class AbstractModels:
         # input data
         args = self.parse_args()
         id = self.parse_id()
+        # TODO pass args to the instance self.intialize(args)
+        # TODO validate self.validate()
+        # TODO self.save()
         message = self.save(id, args)
         #message = self.save_random_id(args)
+        # TODO handle all exception here
+        # define message and code that server returns
         if message:
-            return f'409 {message}'
+            return f'409 {message}' # 400 bad request; 401; 403 - permissions;
         return '200 created successfully'
 
     def put(self):
@@ -43,13 +49,13 @@ class AbstractModels:
         id = self.parse_id()
         message = self.update(id, args)
         if message:
-            return f'404 {message}'
+            return f'404 {message}' # 400 bad request; 401; 403 - permissions;
         return '201 updated successfully'
 
     def delete(self):
         message = self.remove(self.parse_id())
         if message:
-            return f'404 {message}'
+            return f'404 {message}' # 400 bad request; 401; 403 - permissions;
         return '200'
 
     def save(self, id, args):
@@ -70,7 +76,34 @@ class AbstractModels:
 
 class UserProfile(AbstractModels):
 
+
+
+    # TODO describe name, surname, birthday, telephone class object lvl
+    # for validation. Create separate classes for validation
+    # e.x name, sername = charField(class); birthday = dateField(class); telephone = phoneField(class)
+    # file fields.py - class field.
+
+    '''
+    TODO
+    def initialize(args):
+    throw exception if args != 4
+        self.name(arg[0])
+
+
+    TODO
+    def validate():
+        for field in instance.fields:
+            field.check()
+    '''
+
+
+    # TODO general select create update delete from db.py
+
     def check_data(self, args):
+        #TODO parse arg requirments: count 4,
+        # for fields in UserProfile: validate, field
+
+        # TODO create own exception type and raise it
         try:
             name, surname, birthday, telephone = args
         except ValueError as ex:
@@ -124,7 +157,7 @@ class UserProfile(AbstractModels):
 
     def remove(self, id):
         try:
-            del_companies_from_db(id)
+            del_users_from_db(id)
         except Exception as exc:
             return f"{exc}"
 
@@ -135,6 +168,7 @@ class Companies(AbstractModels):
             name, address, telephone = args
         except ValueError as ex:
             return f'Unexpected args{ex}'
+
         if not re.fullmatch('[A-Z][\w]*', name):
             return 'Name should have alphabet text and starts with Capital letter'
         if not re.fullmatch('[\w]*', address):
@@ -198,8 +232,8 @@ class RequestPatcher:
         self.request = self.decode_request(request)
 
     def __call__(self):
-        handler = self.ROUTERS[self.parse_url()](self.request)
-        return self.method_dispatcher(self.parse_method, handler)
+        handler = self.ROUTERS[self.parse_url()](self.request) # detect non exiting url and return 404
+        return self.method_dispatcher(self.parse_method(), handler)
 
     def decode_request(self, request):
         return request.decode('utf-8').split(' ')
@@ -213,11 +247,11 @@ class RequestPatcher:
     def method_dispatcher(self, method, handler):
         try:
             method_dispatcher = {
-                "POST": handler.post(),
-                "PUT": handler.put(),
-                "GET": handler.get(),
-                "DELETE": handler.delete(),
+                "POST": handler.post,
+                "PUT": handler.put,
+                "GET": handler.get,
+                "DELETE": handler.delete,
             }
-            return method_dispatcher[method]
+            return method_dispatcher[method]()
         except KeyError as ex:
             return f'Method {ex} not allowed'
