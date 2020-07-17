@@ -16,7 +16,6 @@ class Server:
         socket_server = self.server_socket
         socket_server.listen()
         task_pool = ThreadPool()
-        print(task_pool)
         while True:
             client_socket, _ = socket_server.accept()
             task_pool.add_task((client_socket, self.job))
