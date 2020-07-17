@@ -11,6 +11,14 @@ class AbstractModels:
     def __init__(self, request):
         self.request = request
 
+    def init_and_validate(self, args):
+
+        for index, (_, inst) in enumerate(self.__dict__.items()):
+            try:
+                inst(args[index])
+            except ValueError as exc:
+                raise ServerValuesException(exc)
+
     def parse_args(self):
         return CheckArgs(self.request[-1].split('\n')[-1])
 
@@ -77,49 +85,18 @@ class AbstractModels:
 
 class UserProfile(AbstractModels):
 
-    # TODO describe name, surname, birthday, telephone class object lvl
-    # for validation. Create separate classes for validation
-    # e.x name, sername = charField(class); birthday = dateField(class); telephone = phoneField(class)
-    # file fields.py - class field.
-
-    '''
-    TODO
-    def initialize(args):
-    throw exception if args != 4
-        self.name(arg[0])
-
-    TODO
-    def validate():
-        for field in instance.fields:
-            field.check()
-    '''
-    # TODO general select create update delete from db.py
-
-    def check_data(self, args):
-        #TODO parse arg requirments: count 4,
-        # for fields in UserProfile: validate, field
-        # TODO create own exception type and raise it
-        try:
-            name, surname, birthday, telephone = args
-        except ValueError as exc:
-            raise ServerValuesException(exc)
-        errors = []
-        for arg in args:
-            errors.append(CharField(arg))
-            errors.append(CharField(arg))
-            errors.append(DateTimeField(arg))
-            errors.append(TeleField(arg))
-        if errors:
-            return errors
-        return name, surname, birthday, telephone
+    name = CharField
+    surname = CharField
+    birthday = DateTimeField
+    telephone = TeleField
 
     def save(self, id, args):
         try:
-            name, surname, birthday, telephone = self.check_data(args)
+            self.init_and_validate(args)
         except ValueError as exc:
             raise ServerValuesException(exc)
         try:
-            ServerDB.insert(id, name, surname, birthday, telephone, self.__class__.__name__)
+            ServerDB.insert(id, self.name.value, self.surname.value, self.birthday.value, self.telephone.value, self.__class__.__name__)
         except Exception as exc:
             raise ServerDatabaseException(exc)
 
@@ -131,11 +108,11 @@ class UserProfile(AbstractModels):
 
     def update(self, args, id):
         try:
-            name, surname, birthday, telephone = self.check_data(args)
+            self.init_and_validate(args)
         except ValueError as exc:
-            return ServerValidateError(exc)
+            return ServerValuesException(exc)
         try:
-            ServerDB.update(id, name, surname, birthday, telephone, self.__class__.__name__)
+            ServerDB.update(id, self.name.value, self.surname.value, self.birthday.value, self.telephone.value, self.__class__.__name__)
         except Exception as exc:
             raise ServerDatabaseException(exc)
 
@@ -147,21 +124,6 @@ class UserProfile(AbstractModels):
 
 
 class Companies(AbstractModels):
-
-    def check_data(self, args):
-        try:
-            name, address, telephone = args
-        except ValueError as exc:
-            raise ServerValuesException(exc)
-        errors = []
-        for arg in args:
-            errors.append(CharField(arg))
-            errors.append(CharField(arg))
-            errors.append(DateTimeField(arg))
-            errors.append(TeleField(arg))
-        if errors:
-            return errors
-        return name, address, telephone
 
     def save(self, id, args):
         try:

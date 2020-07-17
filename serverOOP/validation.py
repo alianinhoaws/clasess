@@ -3,9 +3,13 @@ from serverOOP.serverException import ServerValidateError, ServerValuesException
 
 class Validate:
 
+    @property
+    def value(self):
+        return self.value # decorate before give to external
+
     def __init__(self, value):
         if value and isinstance(value, str):
-            self.value = value
+            self.value(value)
             self.validate()
         else:
             raise ServerValuesException(value)
