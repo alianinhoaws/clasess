@@ -16,7 +16,7 @@ class ServerMethodException(ServerBaseException):
         super().__init__(value)
 
     def __str__(self):
-        return f'Method__{self.value}__is_not_allowed__ServerMethodException'
+        return f'405_Method__{self.value}__is_not_allowed'
 
 
 class ServerValuesException(ServerBaseException):
@@ -39,9 +39,9 @@ class ServerDatabaseException(ServerBaseException):
 
 class ServerValidateError(ServerBaseException):
 
-    def __init__(self, value, expression):
+    def __init__(self, value, pattern):
         super().__init__(value)
-        self.expression = expression
+        self.pattern = pattern
 
     def __str__(self):
-        return f'ServerValidateException: Value_{self.value}__unmatched__expression__{self.expression}'
+        return f'ServerValidateException: Value_{self.value}__unmatched__expression__{self.pattern}'

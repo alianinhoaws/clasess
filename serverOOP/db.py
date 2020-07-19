@@ -1,5 +1,6 @@
 import sqlite3
 
+
 def base_connect(func):
     def wrapper(*args, **kwargs):
         conn = sqlite3.connect('server.db')
@@ -7,7 +8,6 @@ def base_connect(func):
         result = func(c, *args, **kwargs)
         conn.close()
         return result
-
     return wrapper
 
 
