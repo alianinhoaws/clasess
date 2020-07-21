@@ -1,8 +1,10 @@
 import re
 from serverOOP.serverException import ServerValidateError, ServerValuesException
 
-class Validate:
 
+class Validate:
+    """Base class for validation args from request witch based on predefined patterns."""
+    #TODO
     # @property
     # def value(self):
     #     return str(self.value)  # decorate before give to external
@@ -25,6 +27,7 @@ class Validate:
 
 
 class CharField(Validate):
+    """Validate only Char args started with lower case."""
 
     def __init__(self, value):
         super().__init__(value)
@@ -36,17 +39,19 @@ class CharField(Validate):
 
 
 class TeleField(Validate):
+    """Validate telephone number."""
 
     def __init__(self, value):
         super().__init__(value)
 
     def validate(self):
         expression = '[0-9]{10}'
-        pattern = '+380671230213'
+        pattern = '0671230213'
         return self.check_pattern(expression, pattern)
 
 
 class NameField(Validate):
+    """Validate only Char args started with capital letter."""
 
     def __init__(self, value):
         super().__init__(value)
@@ -58,6 +63,7 @@ class NameField(Validate):
 
 
 class DateTimeField(Validate):
+    """Validate dates."""
 
     def __init__(self, value):
         super().__init__(value)
@@ -69,6 +75,7 @@ class DateTimeField(Validate):
 
 
 class NumberField(Validate):
+    """Validate numbers."""
 
     def __init__(self, value):
         super().__init__(value)
@@ -80,14 +87,12 @@ class NumberField(Validate):
 
 
 class CheckArgs(Validate):
-
+    """Define args in existing string."""
     def __init__(self, value):
         super().__init__(value)
 
     def validate(self):
         expression = '=(\w+)'
-        print(self.value)
         pattern = '[arg 1]*'
-        # return self.check_pattern()
-        #if not self.check_pattern(expression, pattern):
-        return self.value
+        return self.check_pattern(expression, pattern)
+

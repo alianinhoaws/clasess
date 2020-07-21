@@ -4,6 +4,7 @@ from serverOOP.models import RequestPatcher
 
 
 class Server:
+    """HTTP threads server."""
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -13,6 +14,7 @@ class Server:
         self.request = None
 
     def run(self):
+        """Method to start the server, threads enabled."""
         socket_server = self.server_socket
         socket_server.listen()
         task_pool = ThreadPool()
@@ -21,10 +23,10 @@ class Server:
             task_pool.add_task((client_socket, self.job))
 
     def job(self, client_socket):
+        """Method to redirect received request to the model and response result to the client."""
         self.request = client_socket.recv(1024)
         if self.request:
             response = str(RequestPatcher(request=self.request)())
-            print("RESPONSE", response)
             client_socket.sendall(response.encode())
             client_socket.close()
 

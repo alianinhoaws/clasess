@@ -1,6 +1,7 @@
 
 
 class ServerBaseException(Exception):
+    """Base class for server errors for server."""
 
     def __init__(self, *args):
         try:
@@ -11,6 +12,7 @@ class ServerBaseException(Exception):
 
 
 class ServerMethodException(ServerBaseException):
+    """Catcher errors in case method is not allowed by the server."""
 
     def __init__(self, value):
         super().__init__(value)
@@ -20,6 +22,7 @@ class ServerMethodException(ServerBaseException):
 
 
 class ServerValuesException(ServerBaseException):
+    """Handler for errors occurred at unpacking values."""
 
     def __init__(self, value):
         super().__init__(value)
@@ -29,6 +32,7 @@ class ServerValuesException(ServerBaseException):
 
 
 class ServerDatabaseException(ServerBaseException):
+    """Handler expected DB errors."""
 
     def __init__(self, value):
         super().__init__(value)
@@ -38,6 +42,7 @@ class ServerDatabaseException(ServerBaseException):
 
 
 class ServerValidateError(ServerBaseException):
+    """Errors validation handler, value and unmatched pattern returns."""
 
     def __init__(self, value, pattern):
         super().__init__(value)
@@ -45,3 +50,13 @@ class ServerValidateError(ServerBaseException):
 
     def __str__(self):
         return f'ServerValidateException: Value_{self.value}__unmatched__expression__{self.pattern}'
+
+
+class UnexpectedError(ServerBaseException):
+    """Error handler in case not expected error in the server occurred."""
+
+    def __init__(self, value):
+        super().__init__(value)
+
+    def __str__(self):
+        return f'{self.value}__Unexpected_behaviour'

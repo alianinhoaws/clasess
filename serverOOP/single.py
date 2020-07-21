@@ -20,7 +20,6 @@ class Database(metaclass=MetaSingleton):
         return self.cursorobj
 
 
-
 db1 = Database().connect()
 db2 = Database().connect()
 db3 = Database().connect()

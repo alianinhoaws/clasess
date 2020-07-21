@@ -1,16 +1,17 @@
-import re
-import random
-
+from typing import Optional
 from serverOOP.db import ServerDB
 from serverOOP.serverException import *
 from serverOOP.validation import *
-# Controller+Model
+import sqlite3
+
 
 class AbstractModels:
+    """Base class for all models existing parse request and CRUD mechanics."""
 
     def __init__(self, request):
         self.request = request
 
+    #TODO repair it
     def init_and_validate(self, args):
 
         for index, (_, inst) in enumerate(self.__dict__.items()):
@@ -19,169 +20,300 @@ class AbstractModels:
             except ValueError as exc:
                 raise ServerValuesException(exc)
 
-    def parse_args(self):
-        return CheckArgs(self.request[-1].split('\n')[-1])
+    def _parse_args(self) -> tuple or str:
+        try:
+            return CheckArgs(self.request[-1].split('\n')[-1])
+        except Exception as exc:
+            return str(exc)
 
-    def parse_url(self):
-        return self.request[1].split('/')[1]
+    def _parse_url(self) -> str:
+        try:
+            return self.request[1].split('/')[1]
+        except Exception as exc:
+            return str(exc)
 
-    def parse_id(self):
+    def _parse_id(self) -> str:
         id = self.request[1].split('/')[2]
         return NumberField(id)
 
-    def get(self):
-        id = self.parse_id()
+    def get(self) -> str:
+        id = self._parse_id()
         if not self.select(id):
-            return '404'
-        return '200'
+            return self.return_codes('404')
+        return self.return_codes('200')
 
-    def post(self):
-        # input data
+    def post(self) -> str:
+        """Input data into model."""
         try:
-            args = self.parse_args()
-            id = self.parse_id()
+            args = self._parse_args()
+            id = self._parse_id()
             message = self.save(id, args)
         except (ServerValidateError, ServerDatabaseException) as exc:
-            return exc
-        # TODO pass args to the instance self.intialize(args)
-        # TODO validate self.validate()
-        # TODO self.save()
-        # TODO handle all exception here
-        # define message and code that server returns
+            return str(exc)
         if message:
-            return f'409 {message}'  # 400 bad request; 401; 403 - permissions;
-        return '200 created successfully'
+            return self.return_codes('409')  # 400 bad request; 401; 403 - permissions;
+        return self.return_codes('200')
 
-    def put(self):
-        # update data
+    def put(self) -> str:
+        """Update data in model."""
         try:
-            args = self.parse_args()
-            id = self.parse_id()
+            args = self._parse_args()
+            id = self._parse_id()
             message = self.update(id, args)
         except (ServerValidateError, ServerDatabaseException) as exc:
-            return exc
+            return str(exc)
         if message:
-            return f'404 {message}'  # 400 bad request; 401; 403 - permissions;
-        return '201 updated successfully'
+            return self.return_codes("400")  # 400 bad request; 401; 403 - permissions;
+        return self.return_codes("201")
 
-    def delete(self):
-        message = self.remove(self.parse_id())
+    def delete(self) -> str:
+        """Delete data in model."""
+        message = self.remove(self._parse_id())
         if message:
-            return f'404 {message}' # 400 bad request; 401; 403 - permissions;
-        return '200'
+            return self.return_codes("400")  # 400 bad request; 401; 403 - permissions;
+        return self.return_codes("202")
 
-    def save(self, id, args):
+    def return_codes(self, code: str) -> str:
+        """Code errors dispatcher."""
+        try:
+            return_codes = {
+                "200": "200 OK",
+                "201": "201 Created",
+                "204": "204 No Content",
+                "400": "400 Bad Request",
+                "404": "404 Not Found",
+                "409": "409 Conflict",
+            }
+            return return_codes[code]
+        except KeyError:
+            raise ServerMethodException(code)
+
+    def save(self, id: str, args: tuple):
         raise NotImplemented
 
-    def update(self, id, args):
+    def update(self, id: str, args: tuple):
         raise NotImplemented
 
-    def remove(self, id):
+    def remove(self, id: str):
         raise NotImplemented
 
-    def select(self, id):
+    def select(self, id: str):
         raise NotImplemented
 
 
 class UserProfile(AbstractModels):
+    """
+    User model profile
 
-    name = CharField
-    surname = CharField
+    E-x:
+    name: 'Name'
+    surname: 'Surname'
+    birthday: '22/08/2010'
+    telephone: '0671230213'
+    """
+
+    name = NameField
+    surname = NameField
     birthday = DateTimeField
     telephone = TeleField
 
-    def save(self, id, args):
+    def save(self, id: str, args: tuple) -> None:
+        """
+        Save values from related args in the DB
+
+        :param args: values sent by the client {name: str, surname: str, birthday: str, telephone: str}
+        :param id: id from URL
+        :raise ServerDatabaseException or UnexpectedError
+        :return: None or error message in case exception
+        """
         try:
             self.init_and_validate(args)
         except ValueError as exc:
             raise ServerValuesException(exc)
         try:
-            ServerDB.insert(id, self.name.value, self.surname.value, self.birthday.value, self.telephone.value, self.__class__.__name__)
+            ServerDB.insert(
+                id, self.name.value, self.surname.value, self.birthday.value, self.telephone.value,
+                self.__class__.__name__)
         except Exception as exc:
-            raise ServerDatabaseException(exc)
+            if isinstance(exc, sqlite3.Error):
+                raise ServerDatabaseException(exc)
+            raise UnexpectedError(exc)
 
-    def select(self, id):
+    def select(self, id) -> Optional[str]:
+        """
+        Select raw from the DB by ID
+
+        :param id: id from URL
+        :raise ServerDatabaseException or UnexpectedError
+        :return: None or error message in case exception
+        """
         try:
-            return ServerDB.select(id, self.__class__.__name__)
+            return str(ServerDB.select(id, self.__class__.__name__))
         except Exception as exc:
-            raise ServerDatabaseException(exc)
+            if isinstance(exc, sqlite3.Error):
+                raise ServerDatabaseException(exc)
+            raise UnexpectedError(exc)
 
-    def update(self, args, id):
+    def update(self, args: tuple, id: str) -> None:
+        """
+        Update values from related args in the DB
+
+        :param args: values sent by the client {name: str, surname: str, birthday: str, telephone: str}
+        :param id: id from URL
+        :raise ServerDatabaseException or UnexpectedError
+        :return: None or error message in case exception
+        """
+        try:
+            self.init_and_validate(args)
+        except ValueError as exc:
+            raise ServerValuesException(exc)
+        try:
+            ServerDB.update(
+                id, self.name.value, self.surname.value, self.birthday.value, self.telephone.value,
+                self.__class__.__name__)
+        except Exception as exc:
+            if isinstance(exc, sqlite3.Error):
+                raise ServerDatabaseException(exc)
+            raise UnexpectedError(exc)
+
+    def remove(self, id: str) -> None:
+        """
+        Remove raw from the DB by ID
+
+        :param id: id from URL
+        :raise ServerDatabaseException or UnexpectedError
+        :return: None or error message in case exception
+        """
+        try:
+            ServerDB.remove(id, self.__class__.__name__)
+        except Exception as exc:
+            if isinstance(exc, sqlite3.Error):
+                raise ServerDatabaseException(exc)
+            raise UnexpectedError(exc)
+
+
+class Companies(AbstractModels):
+    """
+    Companies model profile
+
+    E-x:
+    name: 'Name'
+    address: 'address'
+    telephone: '0671230213'
+    """
+
+    name = NameField
+    address = CharField
+    telephone = TeleField
+
+    def save(self, id: str, args: tuple) -> None:
+        """
+        Save values from related args in the DB
+
+        :param args: values sent by the client {name: str, address: str, telephone: str}
+        :param id: id from URL
+        :raise ServerDatabaseException or UnexpectedError
+        :return: None or error message in case exception
+        """
+        try:
+            self.init_and_validate(args)
+        except ValueError as exc:
+            raise ServerValuesException(exc)
+        try:
+            ServerDB.insert(
+                id, self.name.value, self.address.value, self.telephone.value,
+                self.__class__.__name__)
+        except Exception as exc:
+            if isinstance(exc, sqlite3.Error):
+                raise ServerDatabaseException(exc)
+            raise UnexpectedError(exc)
+
+    def select(self, id: str) -> Optional[str]:
+        """
+        Select raw from the DB by ID
+
+        :param id: id from URL
+        :raise ServerDatabaseException or UnexpectedError
+        :return: None or error message in case exception
+        """
+        try:
+            return str(ServerDB.select(id, self.__class__.__name__))
+        except Exception as exc:
+            if isinstance(exc, sqlite3.Error):
+                raise ServerDatabaseException(exc)
+            raise UnexpectedError(exc)
+
+    def update(self, id: str, args: tuple,) -> None:
+        """
+        Update values from related args in the DB
+
+        :param args: values sent by the client {name: str, address: str, telephone: str}
+        :param id: id from URL
+        :raise ServerDatabaseException or UnexpectedError
+        :return: None or error message in case exception
+        """
         try:
             self.init_and_validate(args)
         except ValueError as exc:
             return ServerValuesException(exc)
         try:
-            ServerDB.update(id, self.name.value, self.surname.value, self.birthday.value, self.telephone.value, self.__class__.__name__)
+            ServerDB.update(
+                id, self.name.value, self.address.value, self.telephone.value,
+                self.__class__.__name__)
         except Exception as exc:
-            raise ServerDatabaseException(exc)
+            if isinstance(exc, sqlite3.Error):
+                raise ServerDatabaseException(exc)
+            raise UnexpectedError(exc)
 
     def remove(self, id):
+        """
+        Remove raw from the DB by ID
+
+        :param id: id from URL
+        :raise ServerDatabaseException or UnexpectedError
+        :return: None or error message in case exception
+         """
         try:
             ServerDB.remove(id, self.__class__.__name__)
         except Exception as exc:
-            raise ServerDatabaseException(exc)
-
-
-class Companies(AbstractModels):
-
-    def save(self, id, args):
-        try:
-            name, address, telephone = self.check_data(args)
-        except ValueError as exc:
-            raise ServerValuesException(exc)
-        try:
-            ServerDB.insert(id, name, address, telephone, self.__class__.__name__)
-        except Exception as exc:
-            raise ServerDatabaseException(exc)
-
-    def select(self, id):
-        try:
-            ServerDB.select(id, self.__class__.__name__)
-        except Exception as exc:
-            raise ServerDatabaseException(exc)
-
-    def update(self, id, args):
-        try:
-            name, address, telephone = self.check_data(args)
-        except ValueError as exc:
-            raise ServerValuesException(exc)
-        try:
-            ServerDB.update(id, name, address, telephone, self.__class__.__name__)
-        except Exception as exc:
-            raise ServerDatabaseException(exc)
-
-    def remove(self, id):
-        try:
-            ServerDB.remove(id, self.__class__.__name__)
-        except Exception as exc:
-            raise ServerDatabaseException(exc)
+            if isinstance(exc, sqlite3.Error):
+                raise ServerDatabaseException(exc)
+            raise UnexpectedError(exc)
 
 
 class RequestPatcher:
+    """Request controller that redirects request to the existing routes."""
 
-    ROUTERS = {
+    __ROUTERS = {
         "users": UserProfile,
         "companies": Companies,
     }
 
     def __init__(self, request):
-        self.request = self.decode_request(request)
+        self.request = self.__decode_request(request)
 
     def __call__(self):
-        handler = self.ROUTERS[self.parse_url()](self.request)  # detect non exiting url and return 404
-        return self.method_dispatcher(self.parse_method(), handler)
+        """Returns executed function according requests method or 404 message in case unsupported method."""
+        try:
+            handler = self.__ROUTERS[self.__parse_url()](self.request)
+        except KeyError:
+            return "404 URL not found"
+        return self.__method_dispatcher(self.__parse_method(), handler)
 
-    def decode_request(self, request):
+    def __decode_request(self, request):
+        """Decode method from the request."""
         return request.decode('utf-8').split(' ')
 
-    def parse_method(self):
+    def __parse_method(self):
+        """Derives method from the request."""
         return self.request[0]
 
-    def parse_url(self):
+    def __parse_url(self):
+        """Derives URL from the request."""
         return self.request[1].split('/')[1]
 
-    def method_dispatcher(self, method, handler):
+    def __method_dispatcher(self, method: str, handler: str) -> Optional[str]:
+        """Returns predefined method for performing related the method used in the request or error in case exception"""
         try:
             method_dispatcher = {
                 "POST": handler.post,
@@ -191,4 +323,4 @@ class RequestPatcher:
             }
             return method_dispatcher[method]()
         except KeyError:
-            raise ServerMethodException(method)
+            return str(ServerMethodException(method))
