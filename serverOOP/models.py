@@ -14,6 +14,9 @@ class AbstractModels:
     #TODO repair it
     def init_and_validate(self, args):
 
+        # TODO list(filter(lambda x: x.__bases__[0] == Validate ,self.__class__.__dict__.values()))
+        # check before bases if is not string
+
         for index, (_, inst) in enumerate(self.__dict__.items()):
             try:
                 inst(args[index])
@@ -34,7 +37,7 @@ class AbstractModels:
 
     def _parse_id(self) -> str:
         id = self.request[1].split('/')[2]
-        return NumberField(id)
+        return id #NumberField(id)
 
     def get(self) -> str:
         id = self._parse_id()

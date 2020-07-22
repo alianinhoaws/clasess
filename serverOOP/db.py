@@ -40,7 +40,7 @@ class ServerDB:
         return ' '.join(values_strings)
 
     @base_connect
-    def insert(self, c:, *args):
+    def insert(self, c, *args):
         insert_values = self.values_dict(args)
         values = self.values_string(args)
         try:
