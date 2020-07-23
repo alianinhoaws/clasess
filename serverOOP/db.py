@@ -12,6 +12,7 @@ def base_connect(func):
 
 #TODO add Singletone inheritance to ServerDB
 
+
 class ServerDB:
 
     def __init__(self):

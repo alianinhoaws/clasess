@@ -1,5 +1,5 @@
 from typing import Optional
-from serverOOP.db import ServerDB
+from serverOOP.db_single import ServerDB
 from serverOOP.serverException import *
 from serverOOP.validation import *
 import sqlite3
@@ -11,21 +11,23 @@ class AbstractModels:
     def __init__(self, request):
         self.request = request
 
-    #TODO repair it
     def init_and_validate(self, args):
-
-        # TODO list(filter(lambda x: x.__bases__[0] == Validate ,self.__class__.__dict__.values()))
-        # check before bases if is not string
-
-        for index, (_, inst) in enumerate(self.__dict__.items()):
-            try:
-                inst(args[index])
-            except ValueError as exc:
-                raise ServerValuesException(exc)
+        index = 0
+        args_list = []
+        for inst in self.__class__.__dict__.values():
+            if isinstance(inst, Validate.__class__):
+                try:
+                    args_list.append(inst(args[index]))
+                    index += 1
+                except ValueError as exc:
+                    raise ServerValuesException(exc)
+        return args_list
 
     def _parse_args(self) -> tuple or str:
         try:
-            return CheckArgs(self.request[-1].split('\n')[-1])
+            args = self.request[-1].split('\n')[-1]
+            CheckArgs(args)
+            return re.findall('=(\w+)', args)
         except Exception as exc:
             return str(exc)
 
@@ -36,8 +38,12 @@ class AbstractModels:
             return str(exc)
 
     def _parse_id(self) -> str:
-        id = self.request[1].split('/')[2]
-        return id #NumberField(id)
+        try:
+            id = self.request[1].split('/')[2]
+            NumberField(id)
+            return id
+        except Exception as exc:
+            return str(exc)
 
     def get(self) -> str:
         id = self._parse_id()
@@ -60,6 +66,7 @@ class AbstractModels:
     def put(self) -> str:
         """Update data in model."""
         try:
+            print('IN PUT')
             args = self._parse_args()
             id = self._parse_id()
             message = self.update(id, args)
@@ -91,10 +98,10 @@ class AbstractModels:
         except KeyError:
             raise ServerMethodException(code)
 
-    def save(self, id: str, args: tuple):
+    def save(self, id: str, args: list):
         raise NotImplemented
 
-    def update(self, id: str, args: tuple):
+    def update(self, id: str, args: list):
         raise NotImplemented
 
     def remove(self, id: str):
@@ -120,17 +127,17 @@ class UserProfile(AbstractModels):
     birthday = DateTimeField
     telephone = TeleField
 
-    def save(self, id: str, args: tuple) -> None:
+    def save(self, id: str, args: list) -> None:
         """
         Save values from related args in the DB
 
-        :param args: values sent by the client {name: str, surname: str, birthday: str, telephone: str}
+        :param args: values sent by the client ['name', 'surname', 'birthday', 'telephone']
         :param id: id from URL
-        :raise ServerDatabaseException or UnexpectedError
+        :raise ServerValuesException, ServerDatabaseException or UnexpectedError
         :return: None or error message in case exception
         """
         try:
-            self.init_and_validate(args)
+            self.name, self.surname, self.birthday, self.telephone = self.init_and_validate(args)
         except ValueError as exc:
             raise ServerValuesException(exc)
         try:
@@ -157,17 +164,17 @@ class UserProfile(AbstractModels):
                 raise ServerDatabaseException(exc)
             raise UnexpectedError(exc)
 
-    def update(self, args: tuple, id: str) -> None:
+    def update(self, id: str, args: list) -> None:
         """
         Update values from related args in the DB
 
-        :param args: values sent by the client {name: str, surname: str, birthday: str, telephone: str}
+        :param args: values sent by the client ['name', 'surname', 'birthday', 'telephone']
         :param id: id from URL
-        :raise ServerDatabaseException or UnexpectedError
+        :raise ServerValuesException, ServerDatabaseException or UnexpectedError
         :return: None or error message in case exception
         """
         try:
-            self.init_and_validate(args)
+            self.name, self.surname, self.birthday, self.telephone = self.init_and_validate(args)
         except ValueError as exc:
             raise ServerValuesException(exc)
         try:
@@ -206,26 +213,25 @@ class Companies(AbstractModels):
     """
 
     name = NameField
-    address = CharField
+    address = NameField
     telephone = TeleField
 
-    def save(self, id: str, args: tuple) -> None:
+    def save(self, id: str, args: list) -> None:
         """
         Save values from related args in the DB
 
-        :param args: values sent by the client {name: str, address: str, telephone: str}
+        :param args: values sent by the client ['name', 'address', 'telephone']
         :param id: id from URL
         :raise ServerDatabaseException or UnexpectedError
         :return: None or error message in case exception
         """
         try:
-            self.init_and_validate(args)
+            self.name, self.address, self.telephone = self.init_and_validate(args)
         except ValueError as exc:
             raise ServerValuesException(exc)
         try:
             ServerDB.insert(
-                id, self.name.value, self.address.value, self.telephone.value,
-                self.__class__.__name__)
+                id, self.name.value, self.address.value, self.telephone.value, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -246,21 +252,21 @@ class Companies(AbstractModels):
                 raise ServerDatabaseException(exc)
             raise UnexpectedError(exc)
 
-    def update(self, id: str, args: tuple,) -> None:
+    def update(self, id: str, args: list) -> None:
         """
         Update values from related args in the DB
 
-        :param args: values sent by the client {name: str, address: str, telephone: str}
+        :param args: values sent by the client ['name', 'address', 'telephone']
         :param id: id from URL
         :raise ServerDatabaseException or UnexpectedError
         :return: None or error message in case exception
         """
         try:
-            self.init_and_validate(args)
+            self.name, self.address, self.telephone = self.init_and_validate(args)
         except ValueError as exc:
-            return ServerValuesException(exc)
+            raise ServerValuesException(exc)
         try:
-            ServerDB.update(
+            ServerDB.update(None,
                 id, self.name.value, self.address.value, self.telephone.value,
                 self.__class__.__name__)
         except Exception as exc:
