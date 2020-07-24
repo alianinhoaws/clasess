@@ -10,6 +10,7 @@ class AbstractModels:
 
     def __init__(self, request):
         self.request = request
+        self.db = ServerDB()
 
     def init_and_validate(self, args):
         index = 0
@@ -17,7 +18,7 @@ class AbstractModels:
         for name, inst in self.__class__.__dict__.items():
             if isinstance(inst, Validate.__class__):
                 try:
-                    (inst(args[index]))
+                    inst(args[index])
                     args_dict[name] = args[index]
                     index += 1
                 except ValueError as exc:
@@ -55,9 +56,12 @@ class AbstractModels:
     def post(self) -> str:
         """Input data into model."""
         try:
-            args = self._parse_args()
-            id = self._parse_id()
-            message = self.save(id, args)
+            message = self.save(
+                self._parse_id(),
+                self.init_and_validate(
+                    self._parse_args()
+                )
+            )
         except (ServerValidateError, ServerDatabaseException) as exc:
             return str(exc)
         if message:
@@ -67,9 +71,12 @@ class AbstractModels:
     def put(self) -> str:
         """Update data in model."""
         try:
-            args = self._parse_args()
-            id = self._parse_id()
-            message = self.update(id, args)
+            message = self.update(
+                self._parse_id(),
+                self.init_and_validate(
+                    self._parse_args()
+                )
+            )
         except (ServerValidateError, ServerDatabaseException) as exc:
             return str(exc)
         if message:
@@ -98,10 +105,10 @@ class AbstractModels:
         except KeyError:
             raise ServerMethodException(code)
 
-    def save(self, id: str, args: list):
+    def save(self, id: str, args: dict):
         raise NotImplemented
 
-    def update(self, id: str, args: list):
+    def update(self, id: str, args: dict):
         raise NotImplemented
 
     def remove(self, id: str):
@@ -137,12 +144,7 @@ class UserProfile(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            self.name, self.surname, self.birthday, self.telephone = self.init_and_validate(args)
-        except ValueError as exc:
-            raise ServerValuesException(exc)
-        try:
-            ServerDB.insert(None, id,
-                            args, self.__class__.__name__)
+            self.db.insert(id, args, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -157,13 +159,13 @@ class UserProfile(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            return str(ServerDB.select(id, self.__class__.__name__))
+            return str(self.db.select(id, self.__class__.__name__))
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
             raise UnexpectedError(exc)
 
-    def update(self, id: str, args: list) -> None:
+    def update(self, id: str, args: dict) -> None:
         """
         Update values from related args in the DB
 
@@ -173,12 +175,7 @@ class UserProfile(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            self.name, self.surname, self.birthday, self.telephone = self.init_and_validate(args)
-        except ValueError as exc:
-            raise ServerValuesException(exc)
-        try:
-            ServerDB.update(None, id,
-                            args, self.__class__.__name__)
+            self.db.update(id, args, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -193,7 +190,7 @@ class UserProfile(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            ServerDB.remove(id, self.__class__.__name__)
+            self.db.remove(id, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -228,8 +225,7 @@ class Companies(AbstractModels):
         except ValueError as exc:
             raise ServerValuesException(exc)
         try:
-            ServerDB.insert(None, id,
-                            args, self.__class__.__name__)
+            self.db.insert(id, args, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -244,13 +240,13 @@ class Companies(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            return str(ServerDB.select(id, self.__class__.__name__))
+            return str(self.db.select(id, self.__class__.__name__))
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
             raise UnexpectedError(exc)
 
-    def update(self, id: str, args: list) -> None:
+    def update(self, id: str, args: dict) -> None:
         """
         Update values from related args in the DB
 
@@ -260,12 +256,7 @@ class Companies(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            args = self.init_and_validate(args)
-        except ValueError as exc:
-            raise ServerValuesException(exc)
-        try:
-            ServerDB.update(None, id,
-               args, self.__class__.__name__)
+            self.db.update(id, args, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -280,7 +271,7 @@ class Companies(AbstractModels):
         :return: None or error message in case exception
          """
         try:
-            ServerDB.remove(id, self.__class__.__name__)
+            self.db.remove(id, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)

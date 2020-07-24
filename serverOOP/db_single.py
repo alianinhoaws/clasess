@@ -58,6 +58,10 @@ class ServerDB:
             return exc
 
     def insert(self, *args):
+        '''
+        :param args: (id, dict(field_name=value), entity_name)
+        :return:
+        '''
         insert_values = Helpers.values(args)
         values = Helpers.values_string(args)
         try:
