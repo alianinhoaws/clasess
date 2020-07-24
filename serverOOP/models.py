@@ -13,15 +13,16 @@ class AbstractModels:
 
     def init_and_validate(self, args):
         index = 0
-        args_list = []
-        for inst in self.__class__.__dict__.values():
+        args_dict = {}
+        for name, inst in self.__class__.__dict__.items():
             if isinstance(inst, Validate.__class__):
                 try:
-                    args_list.append(inst(args[index]))
+                    (inst(args[index]))
+                    args_dict[name] = args[index]
                     index += 1
                 except ValueError as exc:
                     raise ServerValuesException(exc)
-        return args_list
+        return args_dict
 
     def _parse_args(self) -> tuple or str:
         try:
@@ -66,7 +67,6 @@ class AbstractModels:
     def put(self) -> str:
         """Update data in model."""
         try:
-            print('IN PUT')
             args = self._parse_args()
             id = self._parse_id()
             message = self.update(id, args)
@@ -141,9 +141,8 @@ class UserProfile(AbstractModels):
         except ValueError as exc:
             raise ServerValuesException(exc)
         try:
-            ServerDB.insert(
-                id, self.name.value, self.surname.value, self.birthday.value, self.telephone.value,
-                self.__class__.__name__)
+            ServerDB.insert(None, id,
+                            args, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -178,9 +177,8 @@ class UserProfile(AbstractModels):
         except ValueError as exc:
             raise ServerValuesException(exc)
         try:
-            ServerDB.update(
-                id, self.name.value, self.surname.value, self.birthday.value, self.telephone.value,
-                self.__class__.__name__)
+            ServerDB.update(None, id,
+                            args, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -230,8 +228,8 @@ class Companies(AbstractModels):
         except ValueError as exc:
             raise ServerValuesException(exc)
         try:
-            ServerDB.insert(
-                id, self.name.value, self.address.value, self.telephone.value, self.__class__.__name__)
+            ServerDB.insert(None, id,
+                            args, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -262,13 +260,12 @@ class Companies(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            self.name, self.address, self.telephone = self.init_and_validate(args)
+            args = self.init_and_validate(args)
         except ValueError as exc:
             raise ServerValuesException(exc)
         try:
-            ServerDB.update(None,
-                id, self.name.value, self.address.value, self.telephone.value,
-                self.__class__.__name__)
+            ServerDB.update(None, id,
+               args, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)

@@ -125,9 +125,6 @@ if __name__ == '__main__':
 
 #tree.print_tree()
 #print(tree.search(10))
-print(tree.print_tree2())
-
-
 
 
 class Iterator(BinarySearchTree):

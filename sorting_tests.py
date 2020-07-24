@@ -131,7 +131,6 @@ class SortTest(unittest.TestCase):
         insert_sort(self.almost_sorted_list)
         self.assertEqual(self.almost_sorted_list, self.sorted_sample)
 
-
     def test_choice_sort_empty_list(self):
         data = []
         choice_sort(data)
