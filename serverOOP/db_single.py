@@ -46,9 +46,32 @@ class ServerDB:
     def create_tables(self):
         try:
             self.cursor.execute("""CREATE TABLE IF NOT EXISTS Users
-                         (id integer PRIMARY KEY, name text, surname text, birthday text, telephone integer)""")
+                         (id integer PRIMARY KEY AUTOINCREMENT, name text, surname text, birthday text, telephone integer)""")
             self.cursor.execute("""CREATE TABLE IF NOT EXISTS Companies
-                         (id integer PRIMARY KEY, name text, address text, telephone integer)""")
+                         (id integer PRIMARY KEY AUTOINCREMENT, name text, address text, telephone integer)""")
+        except Exception as exc:
+            return exc
+
+    def insert(self, *args):
+        '''
+        :param args: (dict(field_name=value), entity_name)
+        :return:
+        '''
+        # insert_values = Helpers.values(args)
+        # values = Helpers.values_string(args)
+        try:
+            self.cursor.execute(f"INSERT INTO {args[1]} VALUES {', '.join(args[0].values())}")
+        except Exception as exc:
+            return exc
+
+    def update(self, *args):
+        # insert_values = Helpers.values(args)
+        # values = Helpers.values_string(args)
+        try:
+            self.cursor.execute("""UPDATE {table_name} SET {values} WHERE id={id}""".format(
+                table_name=args[-1],
+                values=", ".join(("%s=%s" % (k, v) for k, v in args[1].items())),
+                id=args[0]))
         except Exception as exc:
             return exc
 
@@ -66,7 +89,7 @@ class ServerDB:
                 self.cursor.execute("""UPDATE {} SET {}, 
                                             WHERE id = {}""".format(args[-1], " ".join(values), args[0]), values)
             else:
-                self.cursor.execute("INSERT INTO {} VALUES (?,?,?,?) {}".format(args[-1], arguments), values)
+                self.cursor.execute("INSERT INTO {} VALUES (?,?,?,?)".format(args[-1]), values)
                 #self.cursor.execute("INSERT INTO {} VALUES ({})".format(args[-1], ', '.join(arguments)), values)
             self.conn.commit()
         except Exception as exc:
