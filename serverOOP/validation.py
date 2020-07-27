@@ -5,38 +5,37 @@ from serverOOP.serverException import ServerValidateError, ServerValuesException
 class Validate:
     """Base class for validation args from request witch based on predefined patterns."""
 
-    # TODO
 
-    def __init__(self, a):
+    def __init__(self, inputs):
         self._value = None
-        self.a = a
-        if a and isinstance(a, str):
+        self.inputs = inputs
+        if inputs and isinstance(inputs, str):
             self.validate()
         else:
-            raise ServerValuesException(a)
+            raise ServerValuesException(inputs)
 
     @property
     def value(self):
          return str(self._value)  # decorate before give to external
 
     @value.setter
-    def value(self, a):
-        self._value = a
+    def value(self, inputs):
+        self._value = inputs
 
     def validate(self):
         pass
 
     def check_pattern(self, expression, pattern):
-        if not re.fullmatch(expression, self.a):
-            raise ServerValidateError(self.a, pattern)
-        self.value = self.a
+        if not re.fullmatch(expression, self.inputs):
+            raise ServerValidateError(self.inputs, pattern)
+        self.value = self.inputs
 
 
 class CharField(Validate):
     """Validate only Char args started with lower case."""
 
-    def __init__(self, a):
-        super().__init__(a)
+    def __init__(self, inputs):
+        super().__init__(inputs)
 
     def validate(self):
         expression = '[A-Z][\w]*'
@@ -47,8 +46,8 @@ class CharField(Validate):
 class TeleField(Validate):
     """Validate telephone number."""
 
-    def __init__(self, a):
-        super().__init__(a)
+    def __init__(self, inputs):
+        super().__init__(inputs)
 
     def validate(self):
         expression = '[0-9]{10}'
@@ -59,8 +58,8 @@ class TeleField(Validate):
 class NameField(Validate):
     """Validate only Char args started with capital letter."""
 
-    def __init__(self, a):
-        super().__init__(a)
+    def __init__(self, inputs):
+        super().__init__(inputs)
 
     def validate(self):
         expression = '[A-Z][\w]*'
@@ -71,8 +70,8 @@ class NameField(Validate):
 class DateTimeField(Validate):
     """Validate dates."""
 
-    def __init__(self, a):
-        super().__init__(a)
+    def __init__(self, inputs):
+        super().__init__(inputs)
 
     def validate(self):
         expression = '\d{2}/\d{2}/\d{4}'
@@ -83,8 +82,8 @@ class DateTimeField(Validate):
 class NumberField(Validate):
     """Validate numbers."""
 
-    def __init__(self, a):
-        super().__init__(a)
+    def __init__(self, inputs):
+        super().__init__(inputs)
 
     def validate(self):
         expression = '[\d]*'
@@ -95,8 +94,8 @@ class NumberField(Validate):
 class CheckArgs(Validate):
     """Parse args in existing string."""
 
-    def __init__(self, a):
-        super().__init__(a)
+    def __init__(self, inputs):
+        super().__init__(inputs)
 
     def validate(self):
         expression = '[(\w+)=(\w+)&]+'

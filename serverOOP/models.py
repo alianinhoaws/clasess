@@ -144,7 +144,7 @@ class UserProfile(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            self.db.insert(id, args, self.__class__.__name__)
+            self.db.save_to_base(id, args, self.__class__.__name__, self.__class__.save.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -175,7 +175,7 @@ class UserProfile(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            self.db.update(id, args, self.__class__.__name__)
+            self.db.save_to_base(id, args, self.__class__.__name__, self.__class__.update.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -221,11 +221,7 @@ class Companies(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            self.name, self.address, self.telephone = self.init_and_validate(args)
-        except ValueError as exc:
-            raise ServerValuesException(exc)
-        try:
-            self.db.insert(id, args, self.__class__.__name__)
+            self.db.save_to_base(self.__class__.save.__name__, id, args, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -240,6 +236,7 @@ class Companies(AbstractModels):
         :return: None or error message in case exception
         """
         try:
+            print(self)
             return str(self.db.select(id, self.__class__.__name__))
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
@@ -256,7 +253,7 @@ class Companies(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            self.db.update(id, args, self.__class__.__name__)
+            self.db.save_to_base(self.__class__.update.__name__, id, args, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)

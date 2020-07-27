@@ -20,6 +20,16 @@ class ServerTest(unittest.TestCase):
             mock_client_socket.sendall.assert_called_with(b"404 URL not found")
             mock_client_socket.close.assert_called()
 
+    def test_job_200(self):
+        with patch.object(Server, "__init__", self.fake_init):
+            server = Server('localhost', 8080)
+            mock_client_socket = Mock()
+            mock_request = Mock()
+            mock_request.decode.return_value = "PUT -d name='CompanyX' -d address='London' -d telephone='0685930245' localhost:8080/companies/1"
+            mock_client_socket.recv.return_value = mock_request
+            server.job(mock_client_socket)
+            mock_client_socket.sendall.assert_called_with(b"202 OK")
+            mock_client_socket.close.assert_called()
 '''
 TODO 405_Method__patch__is_not_allowed def test_job_405(self):
 TODO "200 OK" test_job_200(self):

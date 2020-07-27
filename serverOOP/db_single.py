@@ -9,21 +9,15 @@ def base_connect(func):
         result = func(c, *args, **kwargs)
         conn.close()
         return result
-
     return wrapper
 
 
 class Helpers:
-    def values(*args):
-        dict = {}
-        for arg in args[0][1:-1]:
-            dict[f':{arg}'] = arg
-        return dict
 
     def values_string(*args):
         values_strings = []
-        for name, arg in args[0][1:-1].items():
-            values_strings.append(f':{arg}')
+        for name in args[0][1].keys():
+            values_strings.append(f'{name}')
         ' '.join(values_strings)
         return values_strings
 
@@ -41,6 +35,7 @@ class ServerDB:
         self.name = db_name
         self.conn = self.connect()
         self.cursor = self.conn.cursor()
+        self.create_tables()
 
     def connect(self):
         try:
@@ -57,33 +52,29 @@ class ServerDB:
         except Exception as exc:
             return exc
 
-    def insert(self, *args):
-        '''
-        :param args: (id, dict(field_name=value), entity_name)
-        :return:
-        '''
-        insert_values = Helpers.values(args)
-        values = Helpers.values_string(args)
+    def save_to_base(self, types, *args):
+        values = []
+        for x in args[1].values():
+            values.append(x)
+        values.insert(0, args[0])
+        arguments = (Helpers.values_string(args))
+        arguments.insert(0, 'id')
+        values = tuple(values)
+        print(("INSERT INTO {} VALUES ({})".format(args[-1], ', '.join(arguments)), values))
         try:
-            self.cursor.execute("INSERT INTO {} VALUES {}".format(args[-1], values), insert_values)
-        except Exception as exc:
-            return exc
-
-    def update(self, *args):
-        insert_values = Helpers.values(args)
-        values = Helpers.values_string(args)
-        try:
-            self.cursor.execute("""UPDATE {} SET {}, 
-                                WHERE id = :{}""".format(args[-1], values, args[0]),
-                                insert_values)
+            if types == 'insert':
+                self.cursor.execute("""UPDATE {} SET {}, 
+                                            WHERE id = {}""".format(args[-1], " ".join(values), args[0]), values)
+            else:
+                self.cursor.execute("INSERT INTO {} VALUES (?,?,?,?) {}".format(args[-1], arguments), values)
+                #self.cursor.execute("INSERT INTO {} VALUES ({})".format(args[-1], ', '.join(arguments)), values)
+            self.conn.commit()
         except Exception as exc:
             return exc
 
     def remove(self, id, name):
         try:
             self.cursor.execute("DELETE from {} WHERE id = :{}".format(name, id))
-        except sqlite3.Error as exc:
-            return exc
         except Exception as exc:
             return exc
 
@@ -93,4 +84,5 @@ class ServerDB:
             response = self.cursor.fetchall()
         except Exception as exc:
             return exc
+        print(response)
         return response

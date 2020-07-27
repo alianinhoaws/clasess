@@ -47,7 +47,7 @@ class Server:
     '''
     def job(self, client_socket):
         """Method to redirect received request to the model and response result to the client."""
-        self.request = client_socket.recv(1024) # TODO STUB request
+        self.request = client_socket.recv(1024)  # TODO STUB request
         if self.request:
             response = str(RequestPatcher(request=self.request)())
             client_socket.sendall(response.encode())
@@ -57,6 +57,7 @@ class Server:
 if __name__ == '__main__':
     server = Server('localhost', 8080)
     server.run()
+
 
 #curl -X POST -d name='CompanyX' -d address='london' -d telephone='0685930245' localhost:8080/companies/
 #curl -X PUT -d name='CompanyX' -d address='London' -d telephone='0685930245' localhost:8080/companies/1
