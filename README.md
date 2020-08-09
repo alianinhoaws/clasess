@@ -13,13 +13,14 @@ Available methods:
 - DELETE
 
 Mandatory args.
-for user:
+
+For user:
 - name: 'Name'
 - surname: 'Surname'
 - birthday: '22/08/2010'
 - telephone: '0671230213'
 
-for companies:
+For companies:
 - name: 'Name'
 - address: 'Address'
 - telephone: '0671230213'
