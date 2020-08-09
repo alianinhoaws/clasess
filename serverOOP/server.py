@@ -31,7 +31,7 @@ class Server:
     '''
 
     '''
-    if request not empty 
+    if request not empty save_to_base
         check response data 
             "404 URL not found"
             str(ServerMethodException(method)) - > 405_Method__patch__is_not_allowed
@@ -59,8 +59,4 @@ if __name__ == '__main__':
     server.run()
 
 
-#curl -X POST -d name='CompanyX' -d address='london' -d telephone='0685930245' localhost:8080/companies/
-#curl -X PUT -d name='CompanyX' -d address='London' -d telephone='0685930245' localhost:8080/companies/1
-#curl -X GET localhost:8080/companies/12
-#curl -X POST -d id=1 -d name='John' -d surname='Dan' -d birthday='07/07/2010' -d telephone='0685930245' localhost:8080/users/1
-#curl -X GET localhost:8080/users/1
+

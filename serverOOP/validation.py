@@ -5,7 +5,6 @@ from serverOOP.serverException import ServerValidateError, ServerValuesException
 class Validate:
     """Base class for validation args from request witch based on predefined patterns."""
 
-
     def __init__(self, inputs):
         self._value = None
         self.inputs = inputs

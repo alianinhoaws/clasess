@@ -39,19 +39,22 @@ class AbstractModels:
         except Exception as exc:
             return str(exc)
 
-    def _parse_id(self) -> str:
+    def _parse_id(self) -> Optional[str]:
         try:
             id = self.request[1].split('/')[2]
+            if not id:
+                return None
             NumberField(id)
             return id
         except Exception as exc:
             return str(exc)
 
-    def get(self) -> str:
+    def get(self) -> tuple or str:
         id = self._parse_id()
-        if not self.select(id):
+        result = self.select(id)
+        if not result:
             return self.return_codes('404')
-        return self.return_codes('200')
+        return self.return_codes('200'), result
 
     def post(self) -> str:
         """Input data into model."""
@@ -65,7 +68,7 @@ class AbstractModels:
         except (ServerValidateError, ServerDatabaseException) as exc:
             return str(exc)
         if message:
-            return self.return_codes('409')  # 400 bad request; 401; 403 - permissions;
+            return self.return_codes('409')  # Can be extended 400 bad request; 401; 403 - permissions;
         return self.return_codes('200')
 
     def put(self) -> str:
@@ -87,7 +90,7 @@ class AbstractModels:
         """Delete data in model."""
         message = self.remove(self._parse_id())
         if message:
-            return self.return_codes("400")  # 400 bad request; 401; 403 - permissions;
+            return self.return_codes("204")  # 400 bad request; 401; 403 - permissions;
         return self.return_codes("202")
 
     def return_codes(self, code: str) -> str:
@@ -96,6 +99,7 @@ class AbstractModels:
             return_codes = {
                 "200": "200 OK",
                 "201": "201 Created",
+                "202": "202 Accepted",
                 "204": "204 No Content",
                 "400": "400 Bad Request",
                 "404": "404 Not Found",
@@ -144,7 +148,7 @@ class UserProfile(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            self.db.save_to_base(id, args, self.__class__.__name__, self.__class__.save.__name__)
+            return self.db.save_to_base(self.__class__.save.__name__, args, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -159,7 +163,10 @@ class UserProfile(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            return str(self.db.select(id, self.__class__.__name__))
+            if not id:
+                id = None
+            result = self.db.select(self.__class__.__name__, id)
+            return result
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -175,7 +182,7 @@ class UserProfile(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            self.db.save_to_base(id, args, self.__class__.__name__, self.__class__.update.__name__)
+            return self.db.save_to_base(self.__class__.update.__name__, args, id, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -190,7 +197,7 @@ class UserProfile(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            self.db.remove(id, self.__class__.__name__)
+            return self.db.remove(id, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -221,7 +228,7 @@ class Companies(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            self.db.save_to_base(self.__class__.save.__name__, id, args, self.__class__.__name__)
+            return self.db.save_to_base(self.__class__.save.__name__, args, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -236,8 +243,10 @@ class Companies(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            print(self)
-            return str(self.db.select(id, self.__class__.__name__))
+            if not id:
+                id = None
+            result =  self.db.select(self.__class__.__name__, id)
+            return result
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -253,7 +262,7 @@ class Companies(AbstractModels):
         :return: None or error message in case exception
         """
         try:
-            self.db.save_to_base(self.__class__.update.__name__, id, args, self.__class__.__name__)
+            return self.db.save_to_base(self.__class__.update.__name__, args, id, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)
@@ -268,7 +277,7 @@ class Companies(AbstractModels):
         :return: None or error message in case exception
          """
         try:
-            self.db.remove(id, self.__class__.__name__)
+            return self.db.remove(id, self.__class__.__name__)
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):
                 raise ServerDatabaseException(exc)

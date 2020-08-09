@@ -2,27 +2,8 @@ import sqlite3
 from serverOOP.serverException import ServerDatabaseException
 
 
-def base_connect(func):
-    def wrapper(*args, **kwargs):
-        conn = sqlite3.connect('server.db')
-        c = conn.cursor()
-        result = func(c, *args, **kwargs)
-        conn.close()
-        return result
-    return wrapper
-
-
-class Helpers:
-
-    def values_string(*args):
-        values_strings = []
-        for name in args[0][1].keys():
-            values_strings.append(f'{name}')
-        ' '.join(values_strings)
-        return values_strings
-
-
 class ServerDB:
+
     instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -46,66 +27,46 @@ class ServerDB:
     def create_tables(self):
         try:
             self.cursor.execute("""CREATE TABLE IF NOT EXISTS Users
-                         (id integer PRIMARY KEY AUTOINCREMENT, name text, surname text, birthday text, telephone integer)""")
+                         (id integer PRIMARY KEY AUTOINCREMENT, name TEXT, surname TEXT, birthday TEXT, telephone INTEGER)""")
             self.cursor.execute("""CREATE TABLE IF NOT EXISTS Companies
-                         (id integer PRIMARY KEY AUTOINCREMENT, name text, address text, telephone integer)""")
+                         (id integer PRIMARY KEY AUTOINCREMENT, name TEXT, address TEXT, telephone INTEGER )""")
         except Exception as exc:
             return exc
 
-    def insert(self, *args):
-        '''
-        :param args: (dict(field_name=value), entity_name)
-        :return:
-        '''
-        # insert_values = Helpers.values(args)
-        # values = Helpers.values_string(args)
+    def save_to_base(self, *args):
         try:
-            self.cursor.execute(f"INSERT INTO {args[1]} VALUES {', '.join(args[0].values())}")
-        except Exception as exc:
-            return exc
-
-    def update(self, *args):
-        # insert_values = Helpers.values(args)
-        # values = Helpers.values_string(args)
-        try:
-            self.cursor.execute("""UPDATE {table_name} SET {values} WHERE id={id}""".format(
-                table_name=args[-1],
-                values=", ".join(("%s=%s" % (k, v) for k, v in args[1].items())),
-                id=args[0]))
-        except Exception as exc:
-            return exc
-
-    def save_to_base(self, types, *args):
-        values = []
-        for x in args[1].values():
-            values.append(x)
-        values.insert(0, args[0])
-        arguments = (Helpers.values_string(args))
-        arguments.insert(0, 'id')
-        values = tuple(values)
-        print(("INSERT INTO {} VALUES ({})".format(args[-1], ', '.join(arguments)), values))
-        try:
-            if types == 'insert':
-                self.cursor.execute("""UPDATE {} SET {}, 
-                                            WHERE id = {}""".format(args[-1], " ".join(values), args[0]), values)
+            if args[0] == 'save':
+                self.cursor.execute(f"""INSERT INTO {args[-1]} ({", ".join(args[1].keys())}) VALUES 
+        ({f"'%s'" % "','".join(args[1].values())})""")
             else:
-                self.cursor.execute("INSERT INTO {} VALUES (?,?,?,?)".format(args[-1]), values)
-                #self.cursor.execute("INSERT INTO {} VALUES ({})".format(args[-1], ', '.join(arguments)), values)
+                self.cursor.execute("SELECT * FROM {} WHERE id ={}".format(args[-1], args[-2]))
+                if not self.cursor.fetchall():
+                    return '400'
+                self.cursor.execute(f"""UPDATE {args[-1]} SET {", ".join(
+                "%s = '%s'" % (k, v) for k, v in args[1].items())}
+                                       WHERE id={args[-2]}""")
             self.conn.commit()
         except Exception as exc:
             return exc
 
     def remove(self, id, name):
         try:
-            self.cursor.execute("DELETE from {} WHERE id = :{}".format(name, id))
+            self.cursor.execute("SELECT * FROM {} WHERE id ={}".format(name, id))
+            if not self.cursor.fetchall():
+                return '400'
+            self.cursor.execute("DELETE from {} WHERE id ={}".format(name, id))
+            self.conn.commit()
         except Exception as exc:
             return exc
 
-    def select(self, id, name):
+    def select(self, name, id=None):
         try:
-            self.cursor.execute("SELECT * FROM {} WHERE id=:id".format(name), {'id': f'{id}'})
-            response = self.cursor.fetchall()
+            if id:
+                self.cursor.execute("SELECT * FROM {} WHERE id ={}".format(name, id))
+            else:
+                self.cursor.execute("SELECT * FROM {}".format(name))
+            result = self.cursor.fetchall()
+            response = ', '.join(map(str, result))
         except Exception as exc:
             return exc
-        print(response)
         return response
