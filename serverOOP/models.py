@@ -11,6 +11,8 @@ class AbstractModels:
     def __init__(self, request):
         self.request = request
         self.db = ServerDB()
+        print(self.request)
+        print(self.db)
 
     def init_and_validate(self, args):
         index = 0
@@ -69,7 +71,7 @@ class AbstractModels:
             return str(exc)
         if message:
             return self.return_codes('409')  # Can be extended 400 bad request; 401; 403 - permissions;
-        return self.return_codes('200')
+        return self.return_codes('201')
 
     def put(self) -> str:
         """Update data in model."""
@@ -83,15 +85,15 @@ class AbstractModels:
         except (ServerValidateError, ServerDatabaseException) as exc:
             return str(exc)
         if message:
-            return self.return_codes("400")  # 400 bad request; 401; 403 - permissions;
-        return self.return_codes("201")
+            return self.return_codes("404")  # 400 bad request; 401; 403 - permissions;
+        return self.return_codes("200")
 
     def delete(self) -> str:
         """Delete data in model."""
         message = self.remove(self._parse_id())
         if message:
-            return self.return_codes("204")  # 400 bad request; 401; 403 - permissions;
-        return self.return_codes("202")
+            return self.return_codes("404")  # 400 bad request; 401; 403 - permissions;
+        return self.return_codes("200")
 
     def return_codes(self, code: str) -> str:
         """Code errors dispatcher."""
@@ -245,7 +247,7 @@ class Companies(AbstractModels):
         try:
             if not id:
                 id = None
-            result =  self.db.select(self.__class__.__name__, id)
+            result = self.db.select(self.__class__.__name__, id)
             return result
         except Exception as exc:
             if isinstance(exc, sqlite3.Error):

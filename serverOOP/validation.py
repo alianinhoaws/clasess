@@ -15,7 +15,8 @@ class Validate:
 
     @property
     def value(self):
-         return str(self._value)  # decorate before give to external
+        print ("HERE")
+        return str(self._value)  # decorate before give to external
 
     @value.setter
     def value(self, inputs):
@@ -98,5 +99,6 @@ class CheckArgs(Validate):
 
     def validate(self):
         expression = '[(\w+)=(\w+)&]+'
+        print(expression)
         pattern = '"=arg1*"'
         self.check_pattern(expression, pattern)

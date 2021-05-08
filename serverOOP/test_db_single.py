@@ -17,12 +17,12 @@ class ServerDBTest(unittest.TestCase):
         cls.db = ServerDB()
 
     def test_insert(self):
-        self.db.insert({
+        self.db.save_to_base({
             "name": "CompanyX", "address": "London", "telephone": "0685930245"
         }, "Companies")
 
         actual_query = self.db.cursor.execute.call_args[0][0]
-        expected_query = '''INSERT INTO Companies VALUES CompanyX, London, 0685930245'''
+        expected_query = "INSERT INTO Companies VALUES ('CompanyX', 'London', '068593024')"
         self.assertEqual(expected_query, actual_query)
 
     def test_insert_exception(self):
@@ -38,7 +38,13 @@ class ServerDBTest(unittest.TestCase):
         self.assertEqual(expected_query, actual_query)
 
     def test_update_exception(self):
-        raise NotImplemented()  # TODO
+        self.db.update("fakeID", {
+            "name": "CompanyX", "address": "London", "telephone": "0685930244"
+        }, "Companies")
+
+        actual_query = self.db.cursor.execute.call_args[0][0]
+        expected_query = '''UPDATE Companies SET name=CompanyX, address=London, telephone=0685930244 WHERE id=fakeID'''
+        self.assertEqual(expected_query, actual_query)
 
     def test_remove(self):
         raise NotImplemented()  # TODO
@@ -72,7 +78,8 @@ class ServerDBIntegrationTest(unittest.TestCase):
             "telephone": "380991111212"
         }
 
-        self.db.cursor.execute(f"""INSERT INTO Companies ({", ".join(test_data.keys())}) VALUES ({", ".join(test_data.values())})""")
+        self.db.cursor.execute(f"""INSERT INTO Companies ({", ".join(test_data.keys())}) VALUES 
+        ({", ".join(test_data.values())})""")
         self.db.conn.commit()
 
     def test_insert(self):
@@ -85,7 +92,30 @@ class ServerDBIntegrationTest(unittest.TestCase):
         }
         self.assertEqual(tuple(expected_data.values()), res[0][1:])
 
-    def test_update(self):
+    def test_save_to_base_insert(self):
+
+        test_data = {
+            "name": "'CompanyName'",
+            "address": "'CompanyAddress'",
+            "telephone": '380991111212'
+        }
+
+        self.db.cursor.execute(f"""INSERT INTO Companies ({", ".join(test_data.keys())}) VALUES 
+        ({", ".join(test_data.values())})""")
+        self.db.conn.commit()
+
+        res = self.db.cursor.execute('''SELECT * FROM Companies''').fetchall()
+        self.assertEqual(2, len(res))
+
+        expected_data = {
+            "name": "CompanyName",
+            "address": "CompanyAddress",
+            "telephone": 380991111212
+        }
+
+        self.assertEqual(tuple(expected_data.values()), res[0][1:])
+
+    def test_save(self):
         res = self.db.cursor.execute('''SELECT * FROM Companies ''').fetchall()
         self.assertEqual(1, len(res))
         expected_data = {

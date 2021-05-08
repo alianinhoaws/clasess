@@ -10,6 +10,6 @@ def swap_generation(word):
                 yield word[m]+n
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     for x in swap_generation('swap'):
         print(x)

@@ -1,17 +1,19 @@
 
 def insert_sort(array):
-    #  Iterate through len of given array
+    """First element is already sorted so algorithm takes next element
+    from the right and stroll with it to the left checking whether taken element is lower
+    in case matching swap them"""
     for x in range(1, len(array)):
-        while x > 0 and array[x - 1] > array[x]:    #always swap if > previous
+        while x > 0 and array[x - 1] > array[x]:
             array[x], array[x - 1] = array[x - 1], array[x]
-            x -= 1  # decrease X to go from right to left changing positions of element to sort them min goes to right by swap
+            x -= 1
     return array
 
 
 def choice_sort(array):
+    """Try to find min beforehand and put it to the fist place"""
     for start in range(0, len(array) - 1):  # iterate thought all array
-        for find_min in range(start + 1, len(
-                array)):  # try to find MIN in array iterating from start+1 and swap array[0] with array[min]
+        for find_min in range(start + 1, len(array)):
             if array[find_min] < array[start]:
                 array[start], array[find_min] = array[find_min], array[start]
     return array

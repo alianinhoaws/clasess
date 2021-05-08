@@ -27,9 +27,10 @@ class ServerDB:
     def create_tables(self):
         try:
             self.cursor.execute("""CREATE TABLE IF NOT EXISTS Users
-                         (id integer PRIMARY KEY AUTOINCREMENT, name TEXT, surname TEXT, birthday TEXT, telephone INTEGER)""")
+                         (id integer PRIMARY KEY AUTOINCREMENT, name TEXT, surname TEXT, birthday TEXT, telephone TEXT)""")
             self.cursor.execute("""CREATE TABLE IF NOT EXISTS Companies
-                         (id integer PRIMARY KEY AUTOINCREMENT, name TEXT, address TEXT, telephone INTEGER )""")
+                         (id integer PRIMARY KEY AUTOINCREMENT, name TEXT, address TEXT, telephone TEXT )""")
+            print("Tables has been created")
         except Exception as exc:
             return exc
 
@@ -46,6 +47,7 @@ class ServerDB:
                 "%s = '%s'" % (k, v) for k, v in args[1].items())}
                                        WHERE id={args[-2]}""")
             self.conn.commit()
+            print(f"Saved to the base {args}")
         except Exception as exc:
             return exc
 
@@ -56,6 +58,7 @@ class ServerDB:
                 return '400'
             self.cursor.execute("DELETE from {} WHERE id ={}".format(name, id))
             self.conn.commit()
+            print(f"Removed from the base {id, name}")
         except Exception as exc:
             return exc
 
@@ -67,6 +70,7 @@ class ServerDB:
                 self.cursor.execute("SELECT * FROM {}".format(name))
             result = self.cursor.fetchall()
             response = ', '.join(map(str, result))
+            print(f"Derived from the base {id, name}")
         except Exception as exc:
             return exc
         return response
